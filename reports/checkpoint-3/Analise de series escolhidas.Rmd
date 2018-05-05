@@ -1,0 +1,119 @@
+---
+title: "Análise de dados de séries via avaliações de usuários do IMDB"
+author: "Alekssandro Assis Barbosa"
+date: "May 3, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Esta análise utiliza dados de séries extraídos do IMDB. As séries escolhidas para avaliação são:
+
+>>Spartacus;
+>>How I Met Your Mother;
+>>Breaking Bad;
+>>The Walking Dead;
+
+
+```{r include=FALSE}
+library("tidyverse")
+library(dplyr)
+file = read_csv(file = "./data/series_from_imdb.csv")
+```
+
+```{r}
+series = file %>% 
+  filter(series_name %in% c("Spartacus","How I Met Your Mother", 
+                            "Breaking Bad","The Walking Dead"))
+```
+
+
+
+```{r cars}
+summary(series)
+```
+
+Contagem de séries para verificar o filtro
+
+```{r}
+unique(series$series_name)
+```
+
+A série **Spartacus** não está em nosso banco de dados. Então a análise será realizada apenas para estas três séries listadas.
+
+
+### Qual série é melhor avaliada em geral?
+
+```{r}
+series %>% 
+  mutate(Série = as.character(series_name)) %>% 
+  ggplot( aes(x = series_name, y = user_rating,color = Série)) + 
+  geom_jitter(width = 0.8, height = .04, alpha = .6) +
+  geom_boxplot(alpha = .4, width = 0.8) +
+    
+  theme(axis.title.x=element_blank()) +
+  ylab("Avaliação geral do episódio") +
+  ggtitle("Ranking entre séries") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Em geral, a série **Breaking Bad** tem maiores notas.
+
+## Quanto mais temporadas uma série possui maior o índice de avaliação ?  Séries com mais temporadas são (em geral) mais bem avaliadas que séries curtas?
+######### Perguntas de Ana Isadora e Gabriel Guimarães
+
+```{r}
+series %>% 
+    mutate(Série = as.character(series_name)) %>% 
+    ggplot(aes(x = series_ep, y = user_rating, color = Série)) + 
+    geom_line() +
+    scale_y_continuous() +
+    facet_grid(series_name ~ .) +
+
+  xlab("Número do episódio") + 
+  ylab("Nota") +
+  ggtitle("As notas de cada episódio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Não é verdade; pelo gráfico podemos observar que **Breaking Bad** apresentou melhores notas e menor número de episódios.
+>>CP1: The Walking Dead tem episódios de qualidade mais irregular
+
+## Nas séries com menores avaliações, existiu algum episódio que recebeu nota máxima?
+######### Pergunta de Ivyna Alves
+
+```{r}
+twd <- series[series$series_name == "The Walking Dead",]
+unique(twd$user_rating == 10)
+himym <- series[series$series_name == "How I Met Your Mother",]
+unique(himym$user_rating == 10)
+```
+
+Não, as avaliações ao máximo chegam a nota 9.9, como pode ser observado abaixo:
+```{r}
+series %>% 
+    filter(user_rating == max(user_rating))
+```
+
+
+## Quais episódios obtiveram as maiores notas em média?
+
+```{r}
+result <- series %>%
+    select(series_name,episode, user_rating) %>%
+    group_by(series_name, episode) %>%
+    summarize(mean = mean(user_rating))
+result <- result %>% 
+    filter(mean == max(mean))
+
+ggplot(result, aes(x = episode, y = mean)) + 
+  geom_bar(stat = "identity") + 
+  coord_flip() + labs(x = "Nome do episódio", y = "Nota" )
+```
+
+```{r}
+result
+```
+

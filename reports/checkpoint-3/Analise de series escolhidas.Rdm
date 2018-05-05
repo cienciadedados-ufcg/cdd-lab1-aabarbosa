@@ -1,0 +1,64 @@
+---
+title: "Análise de séries escolhidas"
+author: "Alekssandro Assis Barbosa"
+date: "May 3, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Esta análise utiliza dados de séries extraídos do IMDB. As séries escolhidas para avaliação são:
+
+**Spartacus**
+**How I Met Your Mother**
+**Breaking Bad**
+**The Walking Dead**
+
+
+```{r}
+library("tidyverse")
+library(dplyr)
+file = read_csv(file = "./data/series_from_imdb.csv")
+```
+
+```{r}
+series = file %>% 
+  filter(series_name %in% c("Spartacus","How I Met Your Mother", "Breaking Bad","The Walking Dead"))
+```
+
+
+
+```{r cars}
+summary(series)
+```
+
+Contagem de séries para verificar o filtro
+
+```{r}
+unique(series$series_name)
+```
+
+A série **Spartacus** não está em nosso banco de dados. Então a análise será realizada apenas para estas três séries listadas.
+
+
+### Qual série se manteve mais bem avaliada pelo maior período de tempo?
+
+```{r}
+dados.dp <- series %>%
+  mutate(Season = as.character(season_ep)) %>% 
+  group_by(Season) %>%
+  summarise(num_notas = n(), mean = user_rating  %/% num_notas)
+
+series %>% 
+  mutate(Série = as.character(series_name)) %>% 
+  ggplot(mapping = aes(x = season, y = UserRating, color = Série)) + 
+  geom_jitter(alpha = .6, width = .5) +
+  
+  xlab("Número do episódio ná seríe") + 
+  ylab("Avaliação geral do episódio") +
+  ggtitle("Notas gerais de episódios ao longo da série") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
